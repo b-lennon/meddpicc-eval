@@ -1,0 +1,24 @@
+fields:
+  economic_buyer:
+    weight: 3.0
+    min_precision_high: 0.98
+    min_recall: 0.85
+    max_abstention_rate: 0.40
+    regression_tolerance: 0.00
+  metrics:
+    weight: 1.0
+    min_precision_high: 0.90
+    min_recall: 0.75
+    max_abstention_rate: 0.50
+    regression_tolerance: 0.03
+  competition:
+    weight: 1.0
+    min_precision_high: 0.88
+    min_recall: 0.70
+    max_abstention_rate: 0.55
+    regression_tolerance: 0.03
+
+migration_rules:
+  ship: "all fields pass thresholds AND no field regresses beyond tolerance"
+  ship_segment: "fails on one or more segments but passes on others; ship to passing segments only"
+  hold: "any load-bearing field (weight >= 2.0) regresses beyond tolerance"

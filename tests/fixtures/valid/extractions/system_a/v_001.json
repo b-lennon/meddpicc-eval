@@ -1,0 +1,20 @@
+{
+  "economic_buyer": {
+    "value": "Jordan Park, CFO",
+    "confidence": "high",
+    "evidence_quote": "I'll need Jordan our CFO to sign off on anything over $500K.",
+    "abstention_reason": null
+  },
+  "metrics": {
+    "value": null,
+    "confidence": "none",
+    "evidence_quote": null,
+    "abstention_reason": "Prospect did not affirm a quantified outcome."
+  },
+  "competition": {
+    "value": "Doing nothing / status quo",
+    "confidence": "medium",
+    "evidence_quote": "Honestly we've just been doing it manually in spreadsheets.",
+    "abstention_reason": null
+  }
+}
