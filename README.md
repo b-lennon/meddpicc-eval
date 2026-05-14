@@ -1,6 +1,6 @@
 # meddpicc-eval
 
-**A practical eval harness for deciding whether to trust — or switch — your MEDDPICC extraction AI.**
+**A practical eval harness for deciding whether to trust — or switch — your AI model for MEDDPICC extraction.**
 
 When an AI writes to Salesforce, the only question that matters is: *is it right often enough on the things that cost money when it's wrong?* This skill answers that question in 20 minutes, with a one-page scorecard, a deploy/hold verdict, and an audit log naming the specific failure modes hurting you most.
 
