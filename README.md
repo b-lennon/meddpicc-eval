@@ -12,6 +12,77 @@ Three load-bearing design choices:
 
 3. **Edge-case tagging in the golden set.** Without tags, a regression on `champion_not_eb` is invisible in aggregate precision. With tags, the audit log says exactly what failure mode the candidate model is worse on. Tags turn the scorecard from a number into a diagnosis.
 
+## Quick start
+
+The fastest way to see this work is to run it against the deterministic 3%/5% fixture that ships with the skill. No input preparation, no API keys, no network calls — the full pipeline runs in under a second.
+
+### Option A — Run the demo fixture (60 seconds)
+
+```bash
+cd library/skills/meddpicc-eval
+python -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+.venv/bin/python scripts/run_eval.py \
+  --golden tests/fixtures/three_five_scenario/golden-set.jsonl \
+  --extractions tests/fixtures/three_five_scenario/extractions \
+  --thresholds thresholds.yaml \
+  --judgments tests/fixtures/three_five_scenario/judgments.jsonl \
+  --output-dir output/
+
+cat output/scorecard.md
+```
+
+What the scorecard shows:
+
+- **Verdict: HOLD** — `Load-bearing field(s) ['economic_buyer'] regress beyond tolerance in the candidate system.`
+- Per-field table: **EB 0.90 → 0.85 (-0.05 ⚠ FAIL)** alongside **Metrics 0.88 → 0.95 (+0.08 PASS)**. The aggregate improved, the load-bearing field regressed, the verdict is `hold`. That's the whole thesis in one table.
+- EB segment breakdown: `over_1m: 1.00 → 0.92 (-0.08)` — the regression is concentrated in the expensive segment.
+- EB edge-case breakdown: `champion_not_eb: 0.87 → 0.73 (-0.13)` — the $1.2M failure mode, named.
+
+`output/` also contains `verdict.json` (machine-readable, CI-gateable) and `audit-log.jsonl` (one row per failure, with `edge_case_tag` and `segment` intact for diagnosis).
+
+### Option B — Run on your own data
+
+Three inputs go in, three artifacts come out.
+
+**Inputs you produce:**
+
+```
+inputs/
+├── golden-set.jsonl                   # one row per (transcript_id, field), schema: schemas/golden-set.schema.json
+└── extractions/
+    ├── current_model/                 # one folder per extractor you want to evaluate
+    │   ├── T001.json                  # one file per transcript, schema: schemas/extraction.schema.json
+    │   ├── T002.json
+    │   └── ...
+    └── candidate_model/               # (optional) a second extractor for comparison
+        └── ...
+```
+
+`thresholds.yaml` already ships with sensible defaults — copy it, edit per your cost model, or use as-is.
+
+**Run:**
+
+```bash
+.venv/bin/python scripts/run_eval.py \
+  --golden inputs/golden-set.jsonl \
+  --extractions inputs/extractions/ \
+  --thresholds thresholds.yaml \
+  --output-dir output/
+```
+
+If any extraction has `value` and `gold_value` both non-null but not exactly equal, the skill flags those rows for semantic-match judgment and writes them to `output/tentative-grades.jsonl`. Resolve them by appending one JSON line per row to `judgments.jsonl` (see [assets/01-grade-extractions.md](assets/01-grade-extractions.md) for the per-field decision criteria), then re-run with `--judgments judgments.jsonl`.
+
+**Outputs you get:**
+
+| File | For |
+|---|---|
+| `output/scorecard.md` | The Friday-decision document. Readable by a sales leader. |
+| `output/verdict.json` | Machine-readable verdict (`hold` / `ship` / `ship_segment`). Gate your CI on it. |
+| `output/audit-log.jsonl` | One row per failure, tagged. Diagnose what broke, not just how often. |
+
+The skill validates inputs on entry and **bails loudly on contract violations** — malformed schema, missing fields, orphan extractions, contract weirdness. Silent acceptance of malformed input is how eval harnesses ship confidently wrong scorecards.
+
 ## Paper Process and other MEDDPICC variants
 
 The skill is field-agnostic by design. The default `thresholds.yaml` ships the seven fields from the v1 spec (Metrics, Economic Buyer, Decision Criteria, Decision Process, Identify Pain, Champion, Competition). To grade Paper Process — or any other variant field — add one entry to `thresholds.yaml`:
@@ -27,30 +98,6 @@ fields:
 ```
 
 …and ensure each extraction file carries a `paper_process` key. **No code change required.**
-
-## 5-minute test recipe
-
-```bash
-# 1. Install deps into a venv
-python -m venv .venv
-.venv/bin/pip install -r requirements.txt
-
-# 2. Run against the seed golden set + your extractions
-.venv/bin/python scripts/run_eval.py \
-  --golden assets/seed-golden-set.jsonl \
-  --extractions <your_extractions_dir> \
-  --thresholds thresholds.yaml \
-  --output-dir output/
-
-# 3. Open the scorecard
-cat output/scorecard.md
-```
-
-To run the canonical regression test (the 3%/5% scenario that proves the verdict logic works):
-
-```bash
-.venv/bin/pytest tests/test_e2e.py -v
-```
 
 ## Input contract
 
