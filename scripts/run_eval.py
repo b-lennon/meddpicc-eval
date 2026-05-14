@@ -18,6 +18,11 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+# Make `scripts.*` importable when invoked as `python scripts/run_eval.py`.
+_SKILL_ROOT = Path(__file__).resolve().parent.parent
+if str(_SKILL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SKILL_ROOT))
+
 import yaml
 
 from scripts.aggregate import aggregate_all

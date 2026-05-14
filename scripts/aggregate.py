@@ -135,12 +135,30 @@ def aggregate_field_by_edge_case(
 # Top-level rollup: every system × every declared field
 # ---------------------------------------------------------------------------
 
+def _sort_systems(systems: list[str]) -> list[str]:
+    """Order two-system pairs as (current, candidate) when names cue it.
+
+    Heuristic: any name containing 'current' sorts before any name containing
+    'candidate'. Same for legacy/baseline vs proposed/new/migration. Otherwise
+    alphabetical. The ordering matters because the verdict layer treats the
+    first system as the baseline and the second as the migration candidate.
+    """
+    def key(name: str) -> tuple[int, str]:
+        n = name.lower()
+        if "current" in n or "baseline" in n or "legacy" in n:
+            return (0, name)
+        if "candidate" in n or "new" in n or "proposed" in n or "migration" in n:
+            return (2, name)
+        return (1, name)
+    return sorted(systems, key=key)
+
+
 def aggregate_all(
     grades: list[dict[str, Any]],
     declared_fields: list[str],
 ) -> dict[str, Any]:
     """Return a JSON-serializable dict with per-system aggregates."""
-    systems = sorted({g["system"] for g in grades})
+    systems = _sort_systems(list({g["system"] for g in grades}))
     out: dict[str, Any] = {
         "systems": systems,
         "fields": declared_fields,
