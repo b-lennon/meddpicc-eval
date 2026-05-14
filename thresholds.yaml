@@ -1,0 +1,81 @@
+# MEDDPICC field-weighted acceptance thresholds.
+#
+# This skill is field-agnostic: it grades whatever fields you declare here.
+# Default config ships the seven fields from the v1 spec. To grade Paper
+# Process (or any other MEDDPICC variant field), add an entry below — no
+# code change required, just a new key in `fields:` plus an extraction
+# field of the same name on every transcript.
+#
+# Threshold semantics
+# -------------------
+#   weight                — fields with weight >= 2.0 are "load-bearing".
+#                           A regression on a load-bearing field forces
+#                           the migration verdict to `hold`, regardless
+#                           of how much other fields improved.
+#   min_precision_high    — when system says confidence='high', it must be
+#                           right at least this often. This is the
+#                           confidence-calibration gate. Excludes rows
+#                           where the labeler was uncertain (gold_confidence='none').
+#   min_recall            — fraction of true positives the system must catch.
+#   max_abstention_rate   — system returning value=null too often is
+#                           uselessness disguised as humility. Counted as:
+#                           rows where sys_value is null / total rows for the field.
+#   regression_tolerance  — applied to PRECISION_HIGH (the primary
+#                           per-field metric shown in the scorecard).
+#                           If candidate precision_high drops more than
+#                           this from current, the field regresses.
+
+fields:
+  economic_buyer:
+    weight: 3.0                    # Load-bearing. Forecast accuracy turns on EB.
+    min_precision_high: 0.98       # The $1.2M-deal field. Near-zero false-positive tolerance.
+    min_recall: 0.85
+    max_abstention_rate: 0.40      # Above this = too conservative to be useful.
+    regression_tolerance: 0.00     # Zero tolerance for regression on EB.
+
+  metrics:
+    weight: 1.0
+    min_precision_high: 0.90
+    min_recall: 0.75
+    max_abstention_rate: 0.50
+    regression_tolerance: 0.03     # Metrics errors cost a QBR slide, not a deal.
+
+  decision_criteria:
+    weight: 1.5
+    min_precision_high: 0.92
+    min_recall: 0.80
+    max_abstention_rate: 0.45
+    regression_tolerance: 0.02
+
+  decision_process:
+    weight: 1.5
+    min_precision_high: 0.92
+    min_recall: 0.78
+    max_abstention_rate: 0.50
+    regression_tolerance: 0.03
+
+  identify_pain:
+    weight: 2.0                    # Load-bearing. Pain drives qualification; rep-asserted pain is a common false positive.
+    min_precision_high: 0.95
+    min_recall: 0.80
+    max_abstention_rate: 0.45
+    regression_tolerance: 0.02
+
+  champion:
+    weight: 2.0                    # Load-bearing. Champion-vs-EB confusion is the $1.2M failure mode.
+    min_precision_high: 0.95
+    min_recall: 0.80
+    max_abstention_rate: 0.45
+    regression_tolerance: 0.02
+
+  competition:
+    weight: 1.0
+    min_precision_high: 0.88       # status_quo competitor is under-extracted; precision suffers.
+    min_recall: 0.70
+    max_abstention_rate: 0.55
+    regression_tolerance: 0.03
+
+migration_rules:
+  ship: "all fields pass thresholds AND no field regresses beyond tolerance"
+  ship_segment: "fails on one or more segments but passes on others; ship to passing segments only"
+  hold: "any load-bearing field (weight >= 2.0) regresses beyond tolerance"
