@@ -74,3 +74,62 @@ class TestMatchKind:
         assert g.field == "economic_buyer"
         assert g.system == "system_x"
         assert g.segment["deal_size_band"] == "over_1m"
+
+
+# ---------------------------------------------------------------------------
+# Confidence calibration (Task 6)
+# ---------------------------------------------------------------------------
+
+from scripts.grade import CalibrationKind
+
+
+class TestCalibration:
+    def test_high_confidence_correct_is_well_calibrated_high(self):
+        g = _grade(gold_value="X", sys_value="X", sys_confidence="high")
+        assert g.calibration_kind == CalibrationKind.WELL_CALIBRATED_HIGH
+
+    def test_high_confidence_wrong_is_overconfident(self):
+        g = _grade(gold_value=None, sys_value="X", sys_confidence="high")
+        # match=FALSE_POSITIVE, confidence=high → overconfident
+        assert g.calibration_kind == CalibrationKind.OVERCONFIDENT
+
+    def test_high_confidence_false_negative_is_overconfident(self):
+        # System says "I'm sure it's null" with high confidence, but gold has a value.
+        # By the contract, value=null requires confidence=none — so this row should
+        # also surface a contract warning (covered in Task 7).
+        g = _grade(gold_value="X", sys_value=None, sys_confidence="high")
+        assert g.calibration_kind == CalibrationKind.OVERCONFIDENT
+
+    def test_medium_confidence_yields_well_calibrated_medium(self):
+        g = _grade(gold_value="X", sys_value="X", sys_confidence="medium")
+        assert g.calibration_kind == CalibrationKind.WELL_CALIBRATED_MEDIUM
+
+    def test_low_confidence_yields_well_calibrated_low(self):
+        # Low confidence is "appropriately humble" regardless of outcome.
+        g = _grade(gold_value="X", sys_value="X", sys_confidence="low")
+        assert g.calibration_kind == CalibrationKind.WELL_CALIBRATED_LOW
+        g2 = _grade(gold_value="X", sys_value="Y", sys_confidence="low")
+        # MATCH=NEEDS_SEMANTIC_REVIEW → calibration stays PENDING for low+review
+        # but for our simpler rule, low+any-classified-match is well_calibrated_low.
+        # For NEEDS_SEMANTIC_REVIEW, calibration is PENDING until the judge resolves.
+        assert g2.calibration_kind == CalibrationKind.PENDING
+
+    def test_abstention_appropriate_when_gold_is_null(self):
+        g = _grade(gold_value=None, sys_value=None, sys_confidence="none")
+        assert g.calibration_kind == CalibrationKind.APPROPRIATE_ABSTENTION
+
+    def test_abstention_inappropriate_when_gold_non_null(self):
+        # System said "I don't know" but the gold had a value — missed extraction.
+        g = _grade(gold_value="X", sys_value=None, sys_confidence="none")
+        assert g.calibration_kind == CalibrationKind.MISSED_EXTRACTION
+
+    def test_gold_confidence_none_yields_not_applicable_when_system_is_high(self):
+        # Labeler was uncertain → we don't grade calibration in either direction
+        # against this gold row. System confidence is ignored for calibration here.
+        g = _grade(gold_value="X", sys_value="X", gold_confidence="none", sys_confidence="high")
+        assert g.calibration_kind == CalibrationKind.NOT_APPLICABLE
+
+    def test_needs_semantic_review_leaves_calibration_pending(self):
+        g = _grade(gold_value="Jane Smith, CFO", sys_value="Jane Smith", sys_confidence="high")
+        assert g.match == MatchKind.NEEDS_SEMANTIC_REVIEW
+        assert g.calibration_kind == CalibrationKind.PENDING

@@ -97,6 +97,9 @@ class GradeResult:
 # Grading: match kind (Task 5)
 # ---------------------------------------------------------------------------
 
+_CORRECT_MATCHES = {MatchKind.MATCH_EXACT, MatchKind.MATCH_NULL, MatchKind.MATCH_SEMANTIC}
+
+
 def grade_row(
     transcript_id: str,
     field: str,
@@ -112,6 +115,7 @@ def grade_row(
 ) -> GradeResult:
     """Classify one (gold, system) pair for a single field."""
     match = _classify_match(gold_value, sys_value)
+    calibration = _classify_calibration(match, gold_value, gold_confidence, sys_confidence)
     return GradeResult(
         transcript_id=transcript_id,
         field=field,
@@ -125,6 +129,7 @@ def grade_row(
         sys_evidence_quote=sys_evidence_quote,
         edge_case_tag=edge_case_tag,
         segment=segment,
+        calibration_kind=calibration,
     )
 
 
@@ -138,6 +143,42 @@ def _classify_match(gold_value: str | None, sys_value: str | None) -> MatchKind:
     if gold_value == sys_value:
         return MatchKind.MATCH_EXACT
     return MatchKind.NEEDS_SEMANTIC_REVIEW
+
+
+def _classify_calibration(
+    match: MatchKind,
+    gold_value: str | None,
+    gold_confidence: str,
+    sys_confidence: str,
+) -> CalibrationKind:
+    # Labeler uncertain → row contributes neither to overconfidence nor to
+    # well-calibrated counts; abstention semantics still apply.
+    if gold_confidence == "none":
+        return CalibrationKind.NOT_APPLICABLE
+
+    if sys_confidence == "none":
+        if gold_value is None:
+            return CalibrationKind.APPROPRIATE_ABSTENTION
+        return CalibrationKind.MISSED_EXTRACTION
+
+    # Semantic-review pending → defer calibration classification until the
+    # LLM judge resolves the match in confirm_grades.py.
+    if match == MatchKind.NEEDS_SEMANTIC_REVIEW:
+        return CalibrationKind.PENDING
+
+    if sys_confidence == "high":
+        return (
+            CalibrationKind.WELL_CALIBRATED_HIGH
+            if match in _CORRECT_MATCHES
+            else CalibrationKind.OVERCONFIDENT
+        )
+    if sys_confidence == "medium":
+        return CalibrationKind.WELL_CALIBRATED_MEDIUM
+    if sys_confidence == "low":
+        return CalibrationKind.WELL_CALIBRATED_LOW
+
+    # Shouldn't reach here given the enum constraint on sys_confidence.
+    return CalibrationKind.PENDING
 
 
 # ---------------------------------------------------------------------------
