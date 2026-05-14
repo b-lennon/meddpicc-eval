@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "competition": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_criteria": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_process": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Security review then procurement then CFO sign-off'.",
+    "value": "Security review then procurement then CFO sign-off"
+  },
+  "economic_buyer": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Forecast accuracy off by 25%+ each quarter'.",
+    "value": "Forecast accuracy off by 25%+ each quarter"
+  },
+  "metrics": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  }
+}

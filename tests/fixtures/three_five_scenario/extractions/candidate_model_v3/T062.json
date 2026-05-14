@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Sam Patel, VP Sales'.",
+    "value": "Sam Patel, VP Sales"
+  },
+  "competition": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'In-house spreadsheet tooling'.",
+    "value": "In-house spreadsheet tooling"
+  },
+  "decision_criteria": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_process": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'POC then technical evaluation then business case to steering committee'.",
+    "value": "POC then technical evaluation then business case to steering committee"
+  },
+  "economic_buyer": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Michael Torres, VP Finance'.",
+    "value": "Michael Torres, VP Finance"
+  },
+  "identify_pain": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "metrics": {
+    "abstention_reason": "Missed by extractor.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  }
+}

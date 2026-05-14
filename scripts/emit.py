@@ -186,23 +186,23 @@ def _render_segment_block(
     if not all_segments:
         return []
 
-    out = [f"## Segment breakdown — {field_name} (by deal size)", ""]
+    out = [f"## Segment breakdown — {field_name} (accuracy by deal size)", ""]
     if is_comparison:
         cur, cand = systems
         out.append("| Segment | Current | Candidate | Δ |")
         out.append("|---|---|---|---|")
         for seg in all_segments:
-            cur_p = by_seg_per_system[cur].get(dim, {}).get(seg, {}).get("precision_high", 0.0)
-            cand_p = by_seg_per_system[cand].get(dim, {}).get(seg, {}).get("precision_high", 0.0)
-            delta = cand_p - cur_p
-            out.append(f"| {seg} | {cur_p:.2f} | {cand_p:.2f} | {delta:+.2f} |")
+            cur_a = by_seg_per_system[cur].get(dim, {}).get(seg, {}).get("accuracy", 0.0)
+            cand_a = by_seg_per_system[cand].get(dim, {}).get(seg, {}).get("accuracy", 0.0)
+            delta = cand_a - cur_a
+            out.append(f"| {seg} | {cur_a:.2f} | {cand_a:.2f} | {delta:+.2f} |")
     else:
         s = systems[0]
-        out.append("| Segment | Precision@high | Recall |")
+        out.append("| Segment | Accuracy | Recall |")
         out.append("|---|---|---|")
         for seg in all_segments:
             m = by_seg_per_system[s].get(dim, {}).get(seg, {})
-            out.append(f"| {seg} | {m.get('precision_high', 0.0):.2f} | {m.get('recall', 0.0):.2f} |")
+            out.append(f"| {seg} | {m.get('accuracy', 0.0):.2f} | {m.get('recall', 0.0):.2f} |")
     out.append("")
     return out
 
@@ -227,23 +227,31 @@ def _render_edge_case_block(
     if not all_tags:
         return []
 
-    out = [f"## Edge-case breakdown — {field_name}", ""]
+    out = [f"## Edge-case breakdown — {field_name} (accuracy)", ""]
     if is_comparison:
         cur, cand = systems
         out.append("| Edge case | Current | Candidate | Δ |")
         out.append("|---|---|---|---|")
-        for tag in all_tags:
-            cur_p = by_tag_per_system[cur].get(tag, {}).get("precision_high", 0.0)
-            cand_p = by_tag_per_system[cand].get(tag, {}).get("precision_high", 0.0)
-            delta = cand_p - cur_p
-            out.append(f"| {tag} | {cur_p:.2f} | {cand_p:.2f} | {delta:+.2f} |")
+        # Sort by candidate delta ascending so the biggest regressions appear first.
+        sortable = [
+            (
+                tag,
+                by_tag_per_system[cur].get(tag, {}).get("accuracy", 0.0),
+                by_tag_per_system[cand].get(tag, {}).get("accuracy", 0.0),
+            )
+            for tag in all_tags
+        ]
+        sortable.sort(key=lambda r: r[2] - r[1])
+        for tag, cur_a, cand_a in sortable:
+            delta = cand_a - cur_a
+            out.append(f"| {tag} | {cur_a:.2f} | {cand_a:.2f} | {delta:+.2f} |")
     else:
         s = systems[0]
-        out.append("| Edge case | Precision@high | n |")
+        out.append("| Edge case | Accuracy | n |")
         out.append("|---|---|---|")
         for tag in all_tags:
             m = by_tag_per_system[s].get(tag, {})
-            out.append(f"| {tag} | {m.get('precision_high', 0.0):.2f} | {m.get('n_total', 0)} |")
+            out.append(f"| {tag} | {m.get('accuracy', 0.0):.2f} | {m.get('n_total', 0)} |")
     out.append("")
     return out
 

@@ -39,6 +39,7 @@ class FieldMetrics:
     abstention_rate: float
     precision_high: float
     n_high_confidence: int
+    accuracy: float = 0.0  # (TP + TN) / n_total; useful for null-gold subsets where precision is degenerate
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -73,6 +74,9 @@ def aggregate_field(field_name: str, grades: list[dict[str, Any]]) -> FieldMetri
     fp_high = sum(1 for g in high_subset if g["match"] in WRONG_NONNULL_PREDICTIONS)
     precision_high = _safe_div(tp_high, tp_high + fp_high)
 
+    correct = sum(1 for g in relevant if g["match"] in CORRECT_MATCHES or g["match"] == NULL_MATCH)
+    accuracy = _safe_div(correct, n_total)
+
     return FieldMetrics(
         field=field_name,
         n_total=n_total,
@@ -82,6 +86,7 @@ def aggregate_field(field_name: str, grades: list[dict[str, Any]]) -> FieldMetri
         abstention_rate=abstention_rate,
         precision_high=precision_high,
         n_high_confidence=n_high,
+        accuracy=accuracy,
     )
 
 

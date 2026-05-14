@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": "Missed by extractor.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "competition": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_criteria": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Total cost of ownership and integration effort'.",
+    "value": "Total cost of ownership and integration effort"
+  },
+  "decision_process": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "economic_buyer": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Sales reps spending 6 hours/week on data entry'.",
+    "value": "Sales reps spending 6 hours/week on data entry"
+  },
+  "metrics": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Improve forecast accuracy by 15 percentage points'.",
+    "value": "Improve forecast accuracy by 15 percentage points"
+  }
+}

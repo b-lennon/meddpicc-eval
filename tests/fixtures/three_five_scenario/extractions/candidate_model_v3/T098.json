@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": "Missed by extractor.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "competition": {
+    "abstention_reason": "Missed by extractor.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_criteria": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_process": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'POC then technical evaluation then business case to steering committee'.",
+    "value": "POC then technical evaluation then business case to steering committee"
+  },
+  "economic_buyer": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'David Park, COO'.",
+    "value": "David Park, COO"
+  },
+  "identify_pain": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "metrics": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Cut reconciliation effort by 40%'.",
+    "value": "Cut reconciliation effort by 40%"
+  }
+}

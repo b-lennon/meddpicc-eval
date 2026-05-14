@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Casey Rivera, Senior Manager Revenue Operations'.",
+    "value": "Casey Rivera, Senior Manager Revenue Operations"
+  },
+  "competition": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'In-house spreadsheet tooling'.",
+    "value": "In-house spreadsheet tooling"
+  },
+  "decision_criteria": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_process": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "economic_buyer": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Priya Singh, CFO'.",
+    "value": "Priya Singh, CFO"
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Sales reps spending 6 hours/week on data entry'.",
+    "value": "Sales reps spending 6 hours/week on data entry"
+  },
+  "metrics": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  }
+}

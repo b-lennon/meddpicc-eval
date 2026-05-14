@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Casey Rivera, Senior Manager Revenue Operations'.",
+    "value": "Casey Rivera, Senior Manager Revenue Operations"
+  },
+  "competition": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'In-house spreadsheet tooling'.",
+    "value": "In-house spreadsheet tooling"
+  },
+  "decision_criteria": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'API completeness for downstream systems'.",
+    "value": "API completeness for downstream systems"
+  },
+  "decision_process": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'POC then technical evaluation then business case to steering committee'.",
+    "value": "POC then technical evaluation then business case to steering committee"
+  },
+  "economic_buyer": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Forecast accuracy off by 25%+ each quarter'.",
+    "value": "Forecast accuracy off by 25%+ each quarter"
+  },
+  "metrics": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  }
+}

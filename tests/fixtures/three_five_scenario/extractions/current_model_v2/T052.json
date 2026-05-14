@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "competition": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Clari'.",
+    "value": "Clari"
+  },
+  "decision_criteria": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'SOC2 compliance and uptime SLA'.",
+    "value": "SOC2 compliance and uptime SLA"
+  },
+  "decision_process": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "economic_buyer": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Michael Torres, VP Finance'.",
+    "value": "Michael Torres, VP Finance"
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Sales reps spending 6 hours/week on data entry'.",
+    "value": "Sales reps spending 6 hours/week on data entry"
+  },
+  "metrics": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Reduce close time from 8 to 3 days'.",
+    "value": "Reduce close time from 8 to 3 days"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Jordan Lee, Director of Sales Ops'.",
+    "value": "Jordan Lee, Director of Sales Ops"
+  },
+  "competition": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_criteria": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'API completeness for downstream systems'.",
+    "value": "API completeness for downstream systems"
+  },
+  "decision_process": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "economic_buyer": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Sarah Chen, CFO'.",
+    "value": "Sarah Chen, CFO"
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Manual reconciliation taking 12 hours per close'.",
+    "value": "Manual reconciliation taking 12 hours per close"
+  },
+  "metrics": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Improve forecast accuracy by 15 percentage points'.",
+    "value": "Improve forecast accuracy by 15 percentage points"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "champion": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Casey Rivera, Senior Manager Revenue Operations'.",
+    "value": "Casey Rivera, Senior Manager Revenue Operations"
+  },
+  "competition": {
+    "abstention_reason": "Not discussed on this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_criteria": {
+    "abstention_reason": "Insufficient signal in this call.",
+    "confidence": "none",
+    "evidence_quote": null,
+    "value": null
+  },
+  "decision_process": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Pilot with one team then expand based on metrics'.",
+    "value": "Pilot with one team then expand based on metrics"
+  },
+  "economic_buyer": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Priya Singh, CFO'.",
+    "value": "Priya Singh, CFO"
+  },
+  "identify_pain": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Forecast accuracy off by 25%+ each quarter'.",
+    "value": "Forecast accuracy off by 25%+ each quarter"
+  },
+  "metrics": {
+    "abstention_reason": null,
+    "confidence": "high",
+    "evidence_quote": "Prospect stated: 'Reduce close time from 8 to 3 days'.",
+    "value": "Reduce close time from 8 to 3 days"
+  }
+}
