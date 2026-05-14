@@ -117,6 +117,7 @@ def grade_row(
     match = _classify_match(gold_value, sys_value)
     calibration = _classify_calibration(match, gold_value, gold_confidence, sys_confidence)
     warning = _check_contract(sys_value, sys_confidence)
+    faithfulness = _classify_faithfulness(gold_evidence_quote, sys_evidence_quote)
     return GradeResult(
         transcript_id=transcript_id,
         field=field,
@@ -132,6 +133,7 @@ def grade_row(
         segment=segment,
         calibration_kind=calibration,
         contract_warning=warning,
+        evidence_faithfulness=faithfulness,
     )
 
 
@@ -154,6 +156,55 @@ def _check_contract(sys_value: str | None, sys_confidence: str) -> str | None:
             f"non-null ('{sys_value}')."
         )
     return None
+
+
+# ---------------------------------------------------------------------------
+# Evidence faithfulness (Task 8)
+# ---------------------------------------------------------------------------
+
+_FAITHFULNESS_THRESHOLD = 0.7
+
+
+def _classify_faithfulness(
+    gold_quote: str | None, sys_quote: str | None
+) -> EvidenceFaithfulness:
+    """Compare the system's evidence quote against the gold's.
+
+    We don't have the source transcript, so we can't check the system's
+    quote against the call directly. We can check whether it overlaps
+    with the gold's quote — the gold is itself a verbatim span from the
+    transcript, so substantial overlap is a proxy for faithful citation.
+
+    Faithfulness score = max(|S∩G|/|S|, |S∩G|/|G|). This rewards either
+    direction of substring relationship (system quoted a snippet of the
+    gold span, OR system quoted a longer span containing the gold).
+    """
+    if gold_quote is None or sys_quote is None:
+        return EvidenceFaithfulness.UNVERIFIABLE
+
+    gold_tokens = _normalize_tokens(gold_quote)
+    sys_tokens = _normalize_tokens(sys_quote)
+    if not gold_tokens or not sys_tokens:
+        return EvidenceFaithfulness.UNVERIFIABLE
+
+    intersection = gold_tokens & sys_tokens
+    coverage_gold = len(intersection) / len(gold_tokens)
+    coverage_sys = len(intersection) / len(sys_tokens)
+    score = max(coverage_gold, coverage_sys)
+
+    return (
+        EvidenceFaithfulness.FAITHFUL
+        if score >= _FAITHFULNESS_THRESHOLD
+        else EvidenceFaithfulness.UNFAITHFUL
+    )
+
+
+def _normalize_tokens(text: str) -> set[str]:
+    """Lowercase, strip non-alphanumeric, return token set."""
+    cleaned = "".join(
+        c.lower() if c.isalnum() else " " for c in text
+    )
+    return {tok for tok in cleaned.split() if tok}
 
 
 def _classify_match(gold_value: str | None, sys_value: str | None) -> MatchKind:

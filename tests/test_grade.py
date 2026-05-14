@@ -161,3 +161,79 @@ class TestContractWarnings:
     def test_well_formed_extraction_emits_no_warning(self):
         g = _grade(gold_value="X", sys_value="X", sys_confidence="high")
         assert g.contract_warning is None
+
+
+# ---------------------------------------------------------------------------
+# Evidence faithfulness (Task 8)
+# ---------------------------------------------------------------------------
+
+from scripts.grade import EvidenceFaithfulness
+
+
+class TestEvidenceFaithfulness:
+    def test_identical_quotes_are_faithful(self):
+        g = _grade(
+            gold_value="Jane Smith",
+            sys_value="Jane Smith",
+            gold_evidence_quote="Jane will need to sign off on this.",
+            sys_evidence_quote="Jane will need to sign off on this.",
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.FAITHFUL
+
+    def test_system_substring_of_gold_is_faithful(self):
+        g = _grade(
+            gold_value="Jane Smith",
+            sys_value="Jane Smith",
+            gold_evidence_quote="I think Jane will sign off on these contracts.",
+            sys_evidence_quote="Jane will sign off",
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.FAITHFUL
+
+    def test_disjoint_quotes_are_unfaithful(self):
+        g = _grade(
+            gold_value="Jane Smith",
+            sys_value="Jane Smith",
+            gold_evidence_quote="Jane will sign off on this purchase.",
+            sys_evidence_quote="The procurement team handles contracts.",
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.UNFAITHFUL
+
+    def test_gold_quote_null_is_unverifiable(self):
+        # Gold null, system provided a quote: nothing to compare against.
+        g = _grade(
+            gold_value=None,
+            sys_value="Jane Smith",
+            sys_confidence="high",
+            gold_evidence_quote=None,
+            sys_evidence_quote="Jane will sign off.",
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.UNVERIFIABLE
+
+    def test_both_quotes_null_is_unverifiable(self):
+        g = _grade(
+            gold_value=None,
+            sys_value=None,
+            sys_confidence="none",
+            gold_evidence_quote=None,
+            sys_evidence_quote=None,
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.UNVERIFIABLE
+
+    def test_sys_quote_null_with_gold_quote_is_unverifiable(self):
+        g = _grade(
+            gold_value="Jane Smith",
+            sys_value=None,
+            sys_confidence="none",
+            gold_evidence_quote="Jane will sign off.",
+            sys_evidence_quote=None,
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.UNVERIFIABLE
+
+    def test_punctuation_and_case_normalized(self):
+        g = _grade(
+            gold_value="Jane Smith",
+            sys_value="Jane Smith",
+            gold_evidence_quote="Jane will sign off on this!",
+            sys_evidence_quote="jane will sign off on this",
+        )
+        assert g.evidence_faithfulness == EvidenceFaithfulness.FAITHFUL
