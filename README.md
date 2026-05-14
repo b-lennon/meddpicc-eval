@@ -14,7 +14,7 @@ Three scenarios this skill is built for:
 2. **"We rewrote the prompt. Is the new version actually better, or just different?"**
 3. **"Reps don't trust our extractions anymore. Where is the system actually failing?"**
 
-Each is a Friday decision today, not a two-week research project.
+Each needs an answer in hours, not weeks.
 
 ## Why it's different from a generic accuracy report
 
