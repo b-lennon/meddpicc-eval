@@ -1,0 +1,1 @@
+{"transcript_id": "m_001", "field": "economic_buyer", "gold_value": "Jane Smith", "gold_confidence": "high", "gold_evidence_quote": "Jane signs off.", "edge_case_tag": null, "segment": {"deal_size_band": "over_1m", "stage": "negotiation", "call_type": "deep_dive"}}

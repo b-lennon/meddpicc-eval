@@ -1,0 +1,5 @@
+{
+  "economic_buyer": {"value": "Jane Smith", "confidence": "high", "evidence_quote": "Jane signs off.", "abstention_reason": null},
+  "metrics": {"value": null, "confidence": "none", "evidence_quote": null, "abstention_reason": "No metric stated."},
+  "competition": {"value": null, "confidence": "none", "evidence_quote": null, "abstention_reason": "Not discussed."}
+}

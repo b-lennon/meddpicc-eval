@@ -1,0 +1,6 @@
+{
+  "economic_buyer": {"value": "Jane Smith", "confidence": "high", "evidence_quote": "Jane signs off.", "abstention_reason": null},
+  "metrics": {"value": null, "confidence": "none", "evidence_quote": null, "abstention_reason": "No metric stated."},
+  "competition": {"value": null, "confidence": "none", "evidence_quote": null, "abstention_reason": "Not discussed."},
+  "paper_process": {"value": "Standard MSA", "confidence": "high", "evidence_quote": "We'll use our standard MSA.", "abstention_reason": null}
+}
