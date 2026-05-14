@@ -104,6 +104,71 @@ class TestDeltas:
 
 
 # ---------------------------------------------------------------------------
+# Diagnosability — edge-case tag and segment regressions must surface
+# ---------------------------------------------------------------------------
+
+def _read_jsonl(path):
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+class TestDiagnosability:
+    def test_champion_not_eb_regression_appears_in_audit_log(self, e2e_output):
+        """The whole point of edge-case tagging: a champion_not_eb failure must
+        appear in the audit log AS champion_not_eb, not just as 'some EB miss'."""
+        output_dir, _ = e2e_output
+        audit = _read_jsonl(output_dir / "audit-log.jsonl")
+        candidate_eb_failures = [
+            r for r in audit
+            if r["system"] == "candidate_model_v3"
+            and r["field"] == "economic_buyer"
+        ]
+        tags_in_failures = {r.get("edge_case_tag") for r in candidate_eb_failures if r.get("edge_case_tag")}
+        assert "champion_not_eb" in tags_in_failures, (
+            f"Candidate must surface champion_not_eb failures in the audit log. "
+            f"Got tags: {tags_in_failures}"
+        )
+
+    def test_every_audit_row_carries_segment_and_tag(self, e2e_output):
+        """Diagnostics require both segment and edge_case_tag to be present
+        on every audit row (tag may be null; segment must not be)."""
+        output_dir, _ = e2e_output
+        audit = _read_jsonl(output_dir / "audit-log.jsonl")
+        assert audit, "audit log should be non-empty for this fixture"
+        for row in audit:
+            assert "segment" in row and row["segment"] is not None
+            assert "edge_case_tag" in row  # may be null but key must exist
+
+    def test_over_1m_eb_regression_in_scorecard(self, e2e_output):
+        """The scorecard's EB segment breakdown must show the over_1m
+        concentration of the regression."""
+        output_dir, _ = e2e_output
+        scorecard = (output_dir / "scorecard.md").read_text()
+        assert "over_1m" in scorecard, "Segment breakdown must include over_1m"
+        # Confirm the segment block exists for economic_buyer.
+        assert "Segment breakdown" in scorecard
+        assert "economic_buyer" in scorecard
+
+    def test_scorecard_contains_edge_case_breakdown_for_eb(self, e2e_output):
+        """Edge-case breakdown for EB must be present in the scorecard so the
+        reader can see the failure-mode story."""
+        output_dir, _ = e2e_output
+        scorecard = (output_dir / "scorecard.md").read_text()
+        assert "Edge-case breakdown" in scorecard and "economic_buyer" in scorecard
+
+    def test_candidate_has_more_eb_failures_than_current(self, e2e_output):
+        """The candidate must contribute more EB rows to the audit log than
+        the current system — that's the regression made inspectable."""
+        output_dir, _ = e2e_output
+        audit = _read_jsonl(output_dir / "audit-log.jsonl")
+        cur_eb = sum(1 for r in audit if r["system"] == "current_model_v2" and r["field"] == "economic_buyer")
+        cand_eb = sum(1 for r in audit if r["system"] == "candidate_model_v3" and r["field"] == "economic_buyer")
+        assert cand_eb > cur_eb, (
+            f"Candidate should have more EB failures than current. "
+            f"Got cur={cur_eb}, cand={cand_eb}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Determinism (a second run produces the same outputs modulo run_date)
 # ---------------------------------------------------------------------------
 
