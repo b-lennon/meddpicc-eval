@@ -12,76 +12,58 @@ Three load-bearing design choices:
 
 3. **Edge-case tagging in the golden set.** Without tags, a regression on `champion_not_eb` is invisible in aggregate precision. With tags, the audit log says exactly what failure mode the candidate model is worse on. Tags turn the scorecard from a number into a diagnosis.
 
-## Quick start
+## How it works
 
-The fastest way to see this work is to run it against the deterministic 3%/5% fixture that ships with the skill. No input preparation, no API keys, no network calls — the full pipeline runs in under a second.
+This is a model evaluation tool, purpose-built for MEDDPICC extraction. You give it your answer key and your AI's answers, and it tells you whether your AI is good enough to trust — or, if you're comparing two systems, whether switching is safe.
 
-### Option A — Run the demo fixture (60 seconds)
+### What you put in
+
+Two things, both of which your team already has or can produce:
+
+1. **An answer key** — a set of sales calls where your team has written down the correct MEDDPICC values. Who was the Economic Buyer? Was there a clear champion? Did the prospect quantify a goal? The skill calls this the *golden set*. Think of it as the grading rubric.
+
+2. **Your AI's answers** — what your extraction system actually said the MEDDPICC values were on those same calls. To compare two systems (current model vs. a replacement; v1 prompt vs. v2), hand over both.
+
+The skill never reads call transcripts, never calls an API, never touches your CRM. Just the answer key and what the AI said.
+
+### What you get back
+
+Three things:
+
+1. **A scorecard** — one page, plain English. How often is the AI right? On which failure modes? On which deal sizes? Read it the way a sales VP reads a Friday QBR slide.
+
+2. **A verdict** — one of three decisions a CI pipeline can act on automatically:
+   - **`ship`** — the new system is at least as good as the current one. Deploy it.
+   - **`hold`** — the new system regresses on something that costs real money. Don't deploy.
+   - **`ship_segment`** — safe for some deal types, not others. Partial deploy.
+
+3. **An audit log** — every call the AI got wrong, tagged by *failure mode*. Instead of "EB accuracy dropped three points," you see the specific calls and the specific kind of mistake — e.g., the AI confused the champion for the Economic Buyer. That's the failure mode that cost $1.2M last quarter; the audit log surfaces it by name.
+
+### How it decides
+
+You tell the skill once, in a config file, how much each MEDDPICC field is worth to your business. Economic Buyer is load-bearing — a wrong EB on a $1.2M deal mis-forecasts the quarter, so zero tolerance for regression. Metrics is recoverable — a slightly wrong number on a QBR slide is annoying, not deal-killing, so a few points of slack is fine.
+
+The skill grades the AI's answers against the answer key, splits the results by failure mode and deal size, and checks them against your thresholds.
+
+The headline case the skill is designed for: a new model that's 3 points worse on Economic Buyer and 5 points better on Metrics. Aggregate accuracy improved. This skill says **`hold`** — because the regression hit the field that costs the most when it's wrong. That asymmetry is the whole point.
+
+### Try the included demo
+
+To see the above end-to-end on data that ships with the skill (no inputs to prepare):
 
 ```bash
 cd library/skills/meddpicc-eval
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-
 .venv/bin/python scripts/run_eval.py \
   --golden tests/fixtures/three_five_scenario/golden-set.jsonl \
   --extractions tests/fixtures/three_five_scenario/extractions \
   --thresholds thresholds.yaml \
   --judgments tests/fixtures/three_five_scenario/judgments.jsonl \
   --output-dir output/
-
-cat output/scorecard.md
+open output/scorecard.md
 ```
 
-What the scorecard shows:
-
-- **Verdict: HOLD** — `Load-bearing field(s) ['economic_buyer'] regress beyond tolerance in the candidate system.`
-- Per-field table: **EB 0.90 → 0.85 (-0.05 ⚠ FAIL)** alongside **Metrics 0.88 → 0.95 (+0.08 PASS)**. The aggregate improved, the load-bearing field regressed, the verdict is `hold`. That's the whole thesis in one table.
-- EB segment breakdown: `over_1m: 1.00 → 0.92 (-0.08)` — the regression is concentrated in the expensive segment.
-- EB edge-case breakdown: `champion_not_eb: 0.87 → 0.73 (-0.13)` — the $1.2M failure mode, named.
-
-`output/` also contains `verdict.json` (machine-readable, CI-gateable) and `audit-log.jsonl` (one row per failure, with `edge_case_tag` and `segment` intact for diagnosis).
-
-### Option B — Run on your own data
-
-Three inputs go in, three artifacts come out.
-
-**Inputs you produce:**
-
-```
-inputs/
-├── golden-set.jsonl                   # one row per (transcript_id, field), schema: schemas/golden-set.schema.json
-└── extractions/
-    ├── current_model/                 # one folder per extractor you want to evaluate
-    │   ├── T001.json                  # one file per transcript, schema: schemas/extraction.schema.json
-    │   ├── T002.json
-    │   └── ...
-    └── candidate_model/               # (optional) a second extractor for comparison
-        └── ...
-```
-
-`thresholds.yaml` already ships with sensible defaults — copy it, edit per your cost model, or use as-is.
-
-**Run:**
-
-```bash
-.venv/bin/python scripts/run_eval.py \
-  --golden inputs/golden-set.jsonl \
-  --extractions inputs/extractions/ \
-  --thresholds thresholds.yaml \
-  --output-dir output/
-```
-
-If any extraction has `value` and `gold_value` both non-null but not exactly equal, the skill flags those rows for semantic-match judgment and writes them to `output/tentative-grades.jsonl`. Resolve them by appending one JSON line per row to `judgments.jsonl` (see [assets/01-grade-extractions.md](assets/01-grade-extractions.md) for the per-field decision criteria), then re-run with `--judgments judgments.jsonl`.
-
-**Outputs you get:**
-
-| File | For |
-|---|---|
-| `output/scorecard.md` | The Friday-decision document. Readable by a sales leader. |
-| `output/verdict.json` | Machine-readable verdict (`hold` / `ship` / `ship_segment`). Gate your CI on it. |
-| `output/audit-log.jsonl` | One row per failure, tagged. Diagnose what broke, not just how often. |
-
-The skill validates inputs on entry and **bails loudly on contract violations** — malformed schema, missing fields, orphan extractions, contract weirdness. Silent acceptance of malformed input is how eval harnesses ship confidently wrong scorecards.
+The demo runs in under a second. The scorecard opens with a `hold` verdict, names `economic_buyer` as the failing field, and surfaces the `champion_not_eb` regression in the audit log — exactly the scenario described in [Why this shape](#why-this-shape) above. For running it on your own data, the exact file shapes are in [Input contract](#input-contract) below.
 
 ## Paper Process and other MEDDPICC variants
 
