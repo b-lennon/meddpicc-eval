@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meddpicc-eval/schemas/extraction.schema.json",
+  "title": "Extraction File",
+  "description": "One extraction output, one MEDDPICC field per top-level key. Field keys are configuration-driven (thresholds.yaml); this schema enforces only the inner shape via patternProperties.",
+  "type": "object",
+  "minProperties": 1,
+  "patternProperties": {
+    "^[a-z][a-z0-9_]*$": {
+      "$ref": "#/$defs/FieldExtraction"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "FieldExtraction": {
+      "type": "object",
+      "required": ["value", "confidence", "evidence_quote", "abstention_reason"],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": ["string", "null"]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "none"]
+        },
+        "evidence_quote": {
+          "type": ["string", "null"]
+        },
+        "abstention_reason": {
+          "type": ["string", "null"],
+          "description": "Free-form reason for abstaining (null when value is non-null)."
+        }
+      }
+    }
+  }
+}

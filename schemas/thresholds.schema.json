@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meddpicc-eval/schemas/thresholds.schema.json",
+  "title": "Thresholds Config",
+  "description": "Field-weighted acceptance thresholds and migration rules. Field set is declared here; the skill grades whatever fields are present.",
+  "type": "object",
+  "required": ["fields", "migration_rules"],
+  "additionalProperties": false,
+  "properties": {
+    "fields": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "$ref": "#/$defs/FieldThreshold"
+        }
+      },
+      "additionalProperties": false
+    },
+    "migration_rules": {
+      "type": "object",
+      "required": ["ship", "ship_segment", "hold"],
+      "additionalProperties": false,
+      "properties": {
+        "ship": { "type": "string" },
+        "ship_segment": { "type": "string" },
+        "hold": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "FieldThreshold": {
+      "type": "object",
+      "required": [
+        "weight",
+        "min_precision_high",
+        "min_recall",
+        "max_abstention_rate",
+        "regression_tolerance"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Fields with weight >= 2.0 are 'load-bearing' and force `hold` on regression."
+        },
+        "min_precision_high": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "min_recall": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_abstention_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "regression_tolerance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Max allowed drop in precision (candidate vs current) before this field is flagged as regressed."
+        }
+      }
+    }
+  }
+}

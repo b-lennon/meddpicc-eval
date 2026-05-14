@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meddpicc-eval/schemas/golden-set.schema.json",
+  "title": "Golden Set Row",
+  "description": "One labeled (transcript_id, field) row in a MEDDPICC eval golden set.",
+  "type": "object",
+  "required": [
+    "transcript_id",
+    "field",
+    "gold_value",
+    "gold_confidence",
+    "gold_evidence_quote",
+    "edge_case_tag",
+    "segment"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "transcript_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for the source call/transcript. Multiple rows may share a transcript_id."
+    },
+    "field": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MEDDPICC field name. The valid set is configuration-driven (thresholds.yaml), not hard-coded here."
+    },
+    "gold_value": {
+      "type": ["string", "null"],
+      "description": "The labeled correct value, or null if the call genuinely does not support an extraction."
+    },
+    "gold_confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low", "none"],
+      "description": "Labeler confidence in the gold value. 'none' = labeler uncertain; excluded from calibration but included in recall."
+    },
+    "gold_evidence_quote": {
+      "type": ["string", "null"],
+      "description": "Verbatim transcript span supporting the label. MUST be null when gold_value is null."
+    },
+    "edge_case_tag": {
+      "type": ["string", "null"],
+      "description": "Optional free-form tag naming the failure mode this row tests (e.g., 'champion_not_eb', 'status_quo_competitor')."
+    },
+    "segment": {
+      "type": "object",
+      "required": ["deal_size_band", "stage", "call_type"],
+      "additionalProperties": false,
+      "properties": {
+        "deal_size_band": {
+          "type": "string",
+          "enum": ["under_250k", "250k_to_1m", "over_1m"]
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["discovery", "technical_validation", "negotiation", "other"]
+        },
+        "call_type": {
+          "type": "string",
+          "enum": ["discovery", "demo", "deep_dive", "procurement", "other"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meddpicc-eval/schemas/verdict.schema.json",
+  "title": "Migration Verdict",
+  "description": "Machine-readable migration decision artifact, designed for CI gates and downstream automation.",
+  "type": "object",
+  "required": [
+    "verdict",
+    "reason",
+    "failing_fields",
+    "passing_fields",
+    "segment_recommendations",
+    "run_metadata"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["hold", "ship", "ship_segment"]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failing_fields": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "passing_fields": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "segment_recommendations": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["ship_to", "hold_from"],
+          "additionalProperties": false,
+          "properties": {
+            "ship_to": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/SegmentDescriptor" }
+            },
+            "hold_from": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/SegmentDescriptor" }
+            }
+          }
+        }
+      ]
+    },
+    "run_metadata": {
+      "type": "object",
+      "required": ["run_date", "systems_evaluated", "golden_set_size"],
+      "properties": {
+        "run_date": { "type": "string" },
+        "systems_evaluated": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "golden_set_size": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "SegmentDescriptor": {
+      "type": "object",
+      "required": ["dimension", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "enum": ["deal_size_band", "stage", "call_type"]
+        },
+        "value": { "type": "string" }
+      }
+    }
+  }
+}
