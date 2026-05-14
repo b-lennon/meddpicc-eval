@@ -116,6 +116,7 @@ def grade_row(
     """Classify one (gold, system) pair for a single field."""
     match = _classify_match(gold_value, sys_value)
     calibration = _classify_calibration(match, gold_value, gold_confidence, sys_confidence)
+    warning = _check_contract(sys_value, sys_confidence)
     return GradeResult(
         transcript_id=transcript_id,
         field=field,
@@ -130,7 +131,29 @@ def grade_row(
         edge_case_tag=edge_case_tag,
         segment=segment,
         calibration_kind=calibration,
+        contract_warning=warning,
     )
+
+
+def _check_contract(sys_value: str | None, sys_confidence: str) -> str | None:
+    """Surface inner contract violations as warnings (not errors).
+
+    The contract: value=null requires confidence=none, and confidence=none
+    requires value=null. Schema validation catches this at the input stage
+    with a warning; we surface it on the grade row too so the audit log
+    flags the specific (transcript, field, system) where it occurred.
+    """
+    if sys_value is None and sys_confidence != "none":
+        return (
+            f"Contract violation: value is null but confidence is "
+            f"'{sys_confidence}' (expected 'none')."
+        )
+    if sys_value is not None and sys_confidence == "none":
+        return (
+            f"Contract violation: confidence is 'none' but value is "
+            f"non-null ('{sys_value}')."
+        )
+    return None
 
 
 def _classify_match(gold_value: str | None, sys_value: str | None) -> MatchKind:

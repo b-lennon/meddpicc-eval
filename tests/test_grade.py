@@ -133,3 +133,31 @@ class TestCalibration:
         g = _grade(gold_value="Jane Smith, CFO", sys_value="Jane Smith", sys_confidence="high")
         assert g.match == MatchKind.NEEDS_SEMANTIC_REVIEW
         assert g.calibration_kind == CalibrationKind.PENDING
+
+
+# ---------------------------------------------------------------------------
+# Abstention contract warnings (Task 7)
+# ---------------------------------------------------------------------------
+
+class TestContractWarnings:
+    def test_value_null_with_high_confidence_emits_warning(self):
+        # Contract: value=null requires confidence=none.
+        g = _grade(gold_value=None, sys_value=None, sys_confidence="high")
+        assert g.contract_warning is not None
+        assert "confidence" in g.contract_warning.lower()
+        assert "value is null" in g.contract_warning.lower()
+
+    def test_value_nonnull_with_none_confidence_emits_warning(self):
+        # Opposite direction: value=non-null with confidence=none also violates the contract.
+        g = _grade(gold_value="X", sys_value="Jane Smith", sys_confidence="none")
+        assert g.contract_warning is not None
+        assert "confidence" in g.contract_warning.lower()
+        assert "non-null" in g.contract_warning.lower()
+
+    def test_well_formed_abstention_emits_no_warning(self):
+        g = _grade(gold_value=None, sys_value=None, sys_confidence="none")
+        assert g.contract_warning is None
+
+    def test_well_formed_extraction_emits_no_warning(self):
+        g = _grade(gold_value="X", sys_value="X", sys_confidence="high")
+        assert g.contract_warning is None
