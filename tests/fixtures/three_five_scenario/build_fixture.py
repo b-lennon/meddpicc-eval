@@ -493,6 +493,34 @@ def _write_outputs(
     for tid, fields in candidate.items():
         (CANDIDATE_DIR / f"{tid}.json").write_text(json.dumps(fields, indent=2, sort_keys=True) + "\n")
 
+    # Pre-baked judgments.jsonl: every (transcript, field, system) pair where
+    # both gold and system are non-null AND not equal is, by construction, a
+    # mismatch. We wrote those wrong values ourselves. Emitting the
+    # judgments lets the e2e test run without an LLM call.
+    judgments: list[dict[str, str]] = []
+    golden_by_pair = {(g["transcript_id"], g["field"]): g["gold_value"] for g in golden}
+    for system_name, extractions in (("current_model_v2", current), ("candidate_model_v3", candidate)):
+        for tid, fields in extractions.items():
+            for field_name, fextract in fields.items():
+                gold_value = golden_by_pair.get((tid, field_name))
+                sys_value = fextract["value"]
+                if (
+                    gold_value is not None
+                    and sys_value is not None
+                    and gold_value != sys_value
+                ):
+                    judgments.append({
+                        "transcript_id": tid,
+                        "field": field_name,
+                        "system": system_name,
+                        "semantic_match": "mismatch",
+                    })
+    # Stable order for determinism.
+    judgments.sort(key=lambda j: (j["transcript_id"], j["field"], j["system"]))
+    with (OUT_DIR / "judgments.jsonl").open("w") as f:
+        for j in judgments:
+            f.write(json.dumps(j, sort_keys=True) + "\n")
+
 
 def _print_stats(
     golden: list[dict[str, Any]],
