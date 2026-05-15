@@ -2,105 +2,175 @@
 
 **A practical eval harness for deciding whether to trust — or switch — your AI model for MEDDPICC extraction.**
 
-When an AI writes to Salesforce, the only question that matters is: *is it right often enough on the things that cost money when it's wrong?* This skill answers that question in 20 minutes, with a one-page scorecard, a deploy/hold verdict, and an audit log naming the specific failure modes hurting you most.
+When an AI writes to Salesforce, the only question that matters is: *is it right often enough on the things that cost money when it's wrong?* This skill answers that in hours, not weeks — with a one-page scorecard, a machine-readable `ship` / `hold` / `ship_segment` verdict, and an audit log naming the specific failure modes hurting you most.
 
 ---
 
-## The decision this skill makes practical
+## Sample output
 
-Three scenarios this skill is built for:
+The shipped demo runs against a deterministic 100-call regression fixture. Below is the actual scorecard it generates — verdict, per-field deltas, segment breakdown, one audit-log row. Real output, not a mockup.
 
-1. **"Our model provider deprecated the version we built on. Should we migrate?"**
-2. **"We rewrote the prompt. Is the new version actually better, or just different?"**
-3. **"Reps don't trust our extractions anymore. Where is the system actually failing?"**
+### Migration verdict: HOLD
 
-Each needs an answer in hours, not weeks.
+Load-bearing field(s) `['economic_buyer']` regress beyond tolerance in the candidate system. Do not migrate.
 
-## Why it's different from a generic accuracy report
+### Per-field results
 
-Generic eval tools optimize for aggregate accuracy. That's the wrong objective function for a system writing to forecast.
+| Field | Current | Candidate | Δ | Threshold | Status |
+|---|---|---|---|---|---|
+| economic_buyer | 0.90 | 0.85 | -0.05 ⚠ | 0.98 | FAIL |
+| metrics | 0.88 | 0.95 | +0.08 | 0.90 | PASS |
+| decision_criteria | 0.93 | 0.93 | +0.00 | 0.92 | PASS |
+| decision_process | 0.91 | 0.91 | +0.00 | 0.92 | FAIL |
+| identify_pain | 0.93 | 0.93 | +0.00 | 0.95 | FAIL |
+| champion | 0.92 | 0.92 | +0.00 | 0.95 | FAIL |
+| competition | 0.87 | 0.87 | +0.00 | 0.88 | FAIL |
 
-A new model that's **3 points worse on Economic Buyer but 5 points better on Metrics** looks like an improvement on aggregate — and is a deploy decision that costs $1.2M deals. Economic Buyer errors mis-forecast quarters; Metrics errors are slide noise. Treating them as equal weight is how trust collapses.
+Aggregate accuracy improved. The verdict is `hold` because the regression hit a load-bearing field — Economic Buyer — beyond its tolerance.
 
-This skill weights fields by what they cost when wrong. The 3%/5% scenario above produces a **hold** verdict, with the regression named (`champion_not_eb`, concentrated in deals over $1M) so the decision can be acted on, not just absorbed.
+### Segment breakdown — Economic Buyer (accuracy by deal size)
 
-## What you give it. What you get back.
+| Segment | Current | Candidate | Δ |
+|---|---|---|---|
+| under_250k | 0.88 | 0.85 | -0.03 |
+| 250k_to_1m | 0.89 | 0.89 | +0.00 |
+| over_1m | 1.00 | 0.92 | -0.08 |
 
-**Inputs (two things you already have or can produce):**
+The regression concentrates in the largest deals — exactly the segment where EB errors are most expensive.
 
-- **An answer key** — sales calls where your team has written down the correct MEDDPICC values. The skill grades against this.
-- **Your AI's answers** — what your extraction system actually wrote. To compare two systems, hand over both.
+### One audit-log row (out of ~150)
+
+```json
+{
+  "transcript_id": "T002",
+  "field": "economic_buyer",
+  "system": "candidate_model_v3",
+  "match": "false_positive",
+  "gold_value": null,
+  "sys_value": "David Park, COO",
+  "sys_confidence": "high",
+  "edge_case_tag": "champion_not_eb",
+  "segment": { "deal_size_band": "under_250k", "stage": "discovery", "call_type": "discovery" },
+  "calibration_kind": "overconfident",
+  "evidence_faithfulness": "unverifiable"
+}
+```
+
+A failure tagged by mode (`champion_not_eb`) and segment. Aggregate metrics tell you *what* happened; the audit log tells you *which* calls and *which kind* of mistake.
+
+---
+
+## When to use this skill
+
+| Scenario | Time to answer |
+|---|---|
+| *"Our model provider deprecated the version we built on. Should we migrate?"* | Hours |
+| *"We rewrote the prompt. Is the new version actually better, or just different?"* | Hours |
+| *"Reps don't trust our extractions anymore. Where is the system actually failing?"* | Same day |
+
+---
+
+## Why weighted fields, not aggregate accuracy
+
+Generic eval tools optimize for aggregate accuracy. That's the wrong objective for a system writing to forecast.
+
+In the sample output above, the candidate model is *worse* on Economic Buyer and *better* on Metrics. Aggregate accuracy improves. Migrating that model would still cost seven-figure deals — because Economic Buyer errors mis-forecast quarters, and Metrics errors are slide noise. Treating them as equal weight is how trust collapses.
+
+This skill weights fields by what they cost when wrong. The same scenario produces a `hold` verdict, with the regression named (concentrated in a specific deal segment, tagged by the specific failure mode) so the decision can be acted on, not just absorbed.
+
+---
+
+## Inputs and outputs
+
+**You provide two things:**
+
+- **An answer key** (`golden-set.jsonl`) — sales calls where your team has written down the correct MEDDPICC values
+- **Your AI's answers** (one JSON per transcript under `extractions/{system}/`) — what your extraction system produced. Pass two systems' outputs side-by-side to compare them.
 
 The skill never reads transcripts, calls an API, or touches your CRM. Answer key in, AI's answers in, decision out.
 
-**Outputs (three artifacts):**
+**You get three artifacts:**
 
-1. **Scorecard** — one page. Plain English. Reads like a Friday QBR slide.
-2. **Verdict** — `ship` / `hold` / `ship_segment`. Machine-readable so CI pipelines can gate deploys on it.
-3. **Audit log** — every wrong call, tagged by failure mode (`champion_not_eb`, `named_but_absent_cfo`, `status_quo_competitor`, etc.) and deal segment. Turns "accuracy dropped" into "here are the specific calls and the specific kinds of mistakes."
-
-## What "practical" means here
-
-| | Research-paper approach | This skill |
+| File | Format | Audience |
 |---|---|---|
-| **Decision speed** | Two weeks of analysis | 20 minutes |
-| **Output format** | Precision-recall curves | One-page scorecard + verdict |
-| **Threshold logic** | Aggregate accuracy | Field-weighted by business cost |
-| **Failure surfacing** | "EB regressed by 3%" | "EB regressed on `champion_not_eb`, concentrated in deals over $1M" |
-| **Audience** | ML engineer | Sales VP, RevOps lead, CI pipeline |
+| `scorecard.md` | Plain English, one page | VP / Sales leader |
+| `verdict.json` | `ship` / `hold` / `ship_segment` | CI pipeline |
+| `audit-log.jsonl` | Per-failure, tagged by failure mode + segment | Engineer / Enablement |
 
-## Try the included demo
+---
+
+## File contract
+
+```
+inputs/
+  golden-set.jsonl              One row per (transcript_id, field)
+  extractions/{system}/         One JSON per transcript, per system
+  thresholds.yaml               Field weights + acceptance thresholds (optional override; per-field weight, min_precision_high, min_recall, max_abstention_rate, regression_tolerance)
+
+output/
+  scorecard.md                  Human-readable
+  verdict.json                  Machine-readable: ship / hold / ship_segment
+  audit-log.jsonl               Per-failure diagnosis: edge_case_tag + segment
+
+assets/
+  rubric.md                     Labeling guide for AEs and enablement
+schemas/                        JSON schemas for all input/output files
+tests/                          103 tests, <1s, no external dependencies
+```
+
+---
+
+## Running it yourself
+
+To reproduce the sample output above:
 
 ```bash
-cd library/skills/meddpicc-eval
+# Clone and install
+git clone https://github.com/b-lennon/meddpicc-eval.git
+cd meddpicc-eval
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+# Run the demo against the included regression fixture
 .venv/bin/python scripts/run_eval.py \
   --golden tests/fixtures/three_five_scenario/golden-set.jsonl \
   --extractions tests/fixtures/three_five_scenario/extractions \
   --thresholds thresholds.yaml \
   --judgments tests/fixtures/three_five_scenario/judgments.jsonl \
   --output-dir output/
+
 open output/scorecard.md
 ```
 
-Runs in under a second. The scorecard opens with a **hold** verdict, names Economic Buyer as the failing field, and surfaces `champion_not_eb` in the audit log — the failure mode the design was built to catch.
-
-## Built to outlive any one extractor
-
-The skill is **extractor-agnostic** — it works with any model, any prompt version, any vendor that produces the documented JSON shape. Swap models, rewrite prompts, change vendors. The skill stays.
-
-It's also **field-agnostic**. The default ships seven MEDDPICC fields. To grade Paper Process or any other variant, add one entry to `thresholds.yaml`. No code change.
-
-## What this skill deliberately does NOT do
-
-Scope discipline is the design:
-
-- **Doesn't extract.** That's the system being evaluated, not the evaluator.
-- **Doesn't recommend architecture.** It produces a decision; humans act on it.
-- **Doesn't replace labelers.** The rubric guides them; the skill consumes their work.
-
-This is what keeps the skill general. An evaluator that also extracts, recommends, and labels is a research project. An evaluator that only evaluates is a tool.
-
-## Production readiness
-
-The seed golden set (12 rows) demonstrates every edge-case tag and runs the 5-minute test cleanly. For a leadership-facing migration decision, the production commitment is **200 calls**, stratified by deal size band, labeled by **two AEs with enablement adjudication** on disagreements. The labeling rubric is in `assets/rubric.md`.
-
-## File contract (for the engineer integrating it)
-
-```
-inputs/
-  golden-set.jsonl              One row per (transcript_id, field)
-  extractions/{system}/         One JSON per transcript, per system
-  thresholds.yaml               Field weights and acceptance thresholds (optional override)
-
-output/
-  scorecard.md                  Human-readable
-  verdict.json                  Machine-readable (ship / hold / ship_segment)
-  audit-log.jsonl               Per-failure diagnosis with edge_case_tag + segment
-```
-
-Schemas live in `schemas/`. Run `pytest tests/ -v` to see the 103-test coverage; everything runs in under a second with no external dependencies.
+Runs in under a second. To grade your own data, swap the `--golden` and `--extractions` paths for your own files — see [File contract](#file-contract) above for the expected shapes.
 
 ---
 
-**Bottom line:** if you're trying to decide whether your AI is good enough to trust with deals that matter, this skill gives you the answer in a form a VP can act on, a CI pipeline can gate on, and a rep can audit. That's the difference between an eval harness and a decision tool.
+## Built to outlive any one extractor
+
+**Extractor-agnostic.** Works with any model, prompt version, or vendor that produces the documented JSON shape. Swap models, rewrite prompts, change vendors — the skill stays.
+
+**Field-agnostic.** Default ships seven MEDDPICC fields. To add Paper Process or any variant: one entry in `thresholds.yaml`, no code change.
+
+---
+
+## Production readiness
+
+The seed golden set (12 rows) covers every edge-case tag and runs the full test suite in under a second.
+
+For a leadership-facing migration decision, the production commitment is **200 calls**, stratified by deal size band, labeled by **two AEs with enablement adjudication** on disagreements. The labeling rubric is in `assets/rubric.md`.
+
+---
+
+## Deliberate scope limits
+
+| What it doesn't do | Why |
+|---|---|
+| Extract MEDDPICC | That's the system being evaluated, not the evaluator |
+| Recommend architecture | It produces a decision; humans act on it |
+| Replace labelers | The rubric guides them; the skill consumes their output |
+
+An evaluator that also extracts, recommends, and labels is a research project. An evaluator that only evaluates is a tool.
+
+---
+
+**Most eval harnesses tell you how the model scored. This one tells you whether to ship.**
