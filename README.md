@@ -82,6 +82,42 @@ This skill weights fields by what they cost when wrong. The same scenario produc
 
 ---
 
+## Cost-weighted thresholds
+
+| Field | Weight | Regression tolerance | Rationale |
+|---|---|---|---|
+| Economic Buyer | 3.0 | 0.00 | Mis-forecasts the quarter. Zero tolerance. |
+| Champion | 2.0 | 0.02 | Misdirects rep effort. Deals stall. |
+| Identify Pain | 2.0 | 0.02 | Drives qualification. |
+| Decision Criteria | 1.5 | 0.02 | Affects deal strategy. |
+| Decision Process | 1.5 | 0.03 | Affects timing. |
+| Metrics | 1.0 | 0.03 | Slide noise. |
+| Competition | 1.0 | 0.03 | Recoverable. |
+
+Fields with **weight ≥ 2.0** are *load-bearing*. A regression on a load-bearing field forces `hold` regardless of how much other fields improved. Full config in `thresholds.yaml`.
+
+---
+
+## How it works
+
+Inputs on the left, pipeline in the middle, three output artifacts on the right.
+
+```mermaid
+flowchart LR
+    GS["Answer Key<br/>(team-labeled calls)"] --> SCORE["Score each call<br/>(AI's answer vs. answer key)"]
+    EX["AI's Answers<br/>(extractions)"] --> SCORE
+    SCORE --> AGG["Roll up by field,<br/>deal segment,<br/>and failure mode"]
+    AGG --> TH["Apply cost-weighted<br/>thresholds<br/>(EB error &gt; Metrics error)"]
+    TH --> SCARD["Scorecard<br/>(one page, plain English)"]
+    TH --> VRD["Verdict<br/>ship / hold / ship_segment"]
+    TH --> AUD["Audit Log<br/>(failures, tagged)"]
+
+    style TH fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style VRD fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+```
+
+---
+
 ## Inputs and outputs
 
 **You provide two things:**
@@ -90,6 +126,35 @@ This skill weights fields by what they cost when wrong. The same scenario produc
 - **Your AI's answers** (one JSON per transcript under `extractions/{system}/`) — what your extraction system produced. Pass two systems' outputs side-by-side to compare them.
 
 The skill never reads transcripts, calls an API, or touches your CRM. Answer key in, AI's answers in, decision out.
+
+**Sample input shapes.** One row of `golden-set.jsonl`:
+
+```json
+{
+  "transcript_id": "T042",
+  "field": "economic_buyer",
+  "gold_value": "Sarah Chen, CFO",
+  "gold_confidence": "high",
+  "gold_evidence_quote": "Sarah is our CFO; she signs off on anything over $250K",
+  "edge_case_tag": "clear_eb_stated",
+  "segment": { "deal_size_band": "over_1m", "stage": "negotiation", "call_type": "deep_dive" }
+}
+```
+
+…and one field of seven from `extractions/candidate_model_v3/T042.json`:
+
+```json
+{
+  "economic_buyer": {
+    "value": "Sarah Chen, CFO",
+    "confidence": "high",
+    "evidence_quote": "Sarah is the CFO and signs off",
+    "abstention_reason": null
+  }
+}
+```
+
+A complete working example of both shapes lives at `tests/fixtures/three_five_scenario/`.
 
 **You get three artifacts:**
 
