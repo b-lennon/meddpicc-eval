@@ -68,6 +68,8 @@ A failure tagged by mode (`champion_not_eb`) and segment. Aggregate metrics tell
 | *"We rewrote the prompt. Is the new version actually better, or just different?"* | Hours |
 | *"Reps don't trust our extractions anymore. Where is the system actually failing?"* | Same day |
 
+> *Assumes a labeled golden set already exists. First-time setup requires labeling — see [Production readiness](#production-readiness) below.*
+
 ---
 
 ## Why weighted fields, not aggregate accuracy
